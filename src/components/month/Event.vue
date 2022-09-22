@@ -163,8 +163,10 @@ export default defineComponent({
   display: flex;
   align-items: center;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   border-radius: 4px;
-  font-size: var(--qalendar-font-2xs);
+  font-size: var(--qalendar-font-xs);
   width: calc(100% - #{calc(var(--event-inline-padding) * 2)});
   margin-bottom: 4px;
   padding: 2px var(--event-inline-padding);
