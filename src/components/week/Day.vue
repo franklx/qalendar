@@ -129,7 +129,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .calendar-week__day {
   position: relative;
   width: 100%;

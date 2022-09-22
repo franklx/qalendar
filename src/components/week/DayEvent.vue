@@ -601,7 +601,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .calendar-week__event {
   position: absolute;
   width: 100%;

@@ -46,7 +46,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .day-timeline {
   position: absolute;
   top: 0;

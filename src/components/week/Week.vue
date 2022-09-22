@@ -380,7 +380,7 @@ export default defineComponent({
 });
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .calendar-week__wrapper {
   position: relative;
   padding-left: var(--qalendar-week-padding-left);
