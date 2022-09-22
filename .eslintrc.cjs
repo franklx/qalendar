@@ -18,7 +18,7 @@ module.exports = {
     'vue/multi-word-component-names': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
-    'prettier/prettier': ['error', {'singleQuote': true}],
+    'prettier/prettier': ['error', {'singleQuote': false}],
   },
   ignorePatterns: "**/*.js",
 };

@@ -394,6 +394,7 @@ The date picker from the Qalendar-header, can also be used as a stand-alone comp
 ```vue
 <template>
   <DatePicker
+    config=":config"
     locale="en-US"
     firstDayOfWeek="sunday"
     :disable-dates="disableDates"
@@ -428,6 +429,7 @@ export default {
 ```
 
 <DatePicker
+  config=":config"
   locale="en-US"
   first-day-of-week="sunday"
   :disable-dates="{ before: new Date(2022, 5, 1), after: new Date(2022, 5, 31) }"

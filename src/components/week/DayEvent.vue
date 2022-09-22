@@ -29,34 +29,22 @@
       </div>
 
       <div class="calendar-week__event-row is-time">
-        <font-awesome-icon
-          :icon="icons.clock"
-          class="calendar-week__event-icon"
-        />
+        <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.clock}`"/>
         <span>{{ getEventTime }}</span>
       </div>
 
       <div v-if="event.location" class="calendar-week__event-row is-location">
-        <font-awesome-icon
-          :icon="icons.location"
-          class="calendar-week__event-icon"
-        />
+        <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.location}`"/>
         <span>{{ event.location }}</span>
       </div>
 
       <div v-if="event.with" class="calendar-week__event-row is-with">
-        <font-awesome-icon
-          :icon="icons.user"
-          class="calendar-week__event-icon"
-        />
+        <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.user}`"/>
         <span>{{ event.with }}</span>
       </div>
 
       <div v-if="event.topic" class="calendar-week__event-row is-topic">
-        <font-awesome-icon
-          :icon="icons.topic"
-          class="calendar-week__event-icon"
-        />
+        <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.topic}`"/>
         <span>{{ event.topic }}</span>
       </div>
 
@@ -64,10 +52,7 @@
         v-if="event.description"
         class="calendar-week__event-row is-description"
       >
-        <font-awesome-icon
-          :icon="icons.description"
-          class="calendar-week__event-icon"
-        />
+        <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.description}`"/>
         <!-- eslint-disable vue/no-v-html -->
         <p v-html="event.description" />
         <!--eslint-enable-->
@@ -115,14 +100,6 @@
 import { defineComponent, PropType } from 'vue';
 import { eventInterface } from '../../typings/interfaces/event.interface';
 import EventPosition from '../../helpers/EventPosition';
-import {
-  faClock,
-  faComment,
-  faUser,
-  faMapMarkerAlt,
-  faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import Time from '../../helpers/Time';
 import { configInterface } from '../../typings/config.interface';
 import { EVENT_COLORS } from '../../constants';
@@ -132,10 +109,6 @@ import { modeType } from '../../typings/types';
 
 export default defineComponent({
   name: 'DayEvent',
-
-  components: {
-    FontAwesomeIcon,
-  },
 
   props: {
     eventProp: {
@@ -165,13 +138,6 @@ export default defineComponent({
   data() {
     return {
       event: this.eventProp,
-      icons: {
-        clock: faClock,
-        user: faUser,
-        description: faComment,
-        location: faMapMarkerAlt,
-        topic: faQuestionCircle,
-      },
       showResizeElements: false,
       eventTransformValue: 'initial',
       eventZIndexValue: 'initial' as 'initial' | number,

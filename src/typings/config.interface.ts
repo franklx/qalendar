@@ -46,6 +46,20 @@ export type dayIntervalsType = {
   intervalStyles?: { [key: string]: any };
 }
 
+export type iconClasses = {
+  clock: string;
+  user: string;
+  description: string;
+  trash: string;
+  edit: string;
+  times: string;
+  topic: string;
+  location: string;
+  calendar: string;
+  chevronLeft: string;
+  chevronRight: string;
+}
+
 export interface configInterface {
   locale?: string;
   week?: {
@@ -56,6 +70,7 @@ export interface configInterface {
   style?: {
     fontFamily?: string;
     colorSchemes?: colorSchemes;
+    iconClasses?: iconClasses;
   };
   defaultMode?: modeType;
   disableModes?: ('week'|'month')[];

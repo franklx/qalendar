@@ -6,21 +6,14 @@
 
     <div class="calendar-header__period">
       <div class="calendar-header__chevron-arrows">
-        <FontAwesomeIcon
-          class="calendar-header__chevron-arrow calendar-header__chevron-arrow-left"
-          :icon="icons.chevronLeft"
-          @click="goToPeriod($event, 'previous')"
-        />
+        <i :class="`calendar-header__chevron-arrow calendar-header__chevron-arrow-left ${config.style?.iconClasses?.chevronLeft}`" @click="goToPeriod($event, 'previous')"/>
 
-        <FontAwesomeIcon
-          class="calendar-header__chevron-arrow calendar-header__chevron-arrow-right"
-          :icon="icons.chevronRight"
-          @click="goToPeriod($event, 'next')"
-        />
+        <i :class="`calendar-header__chevron-arrow calendar-header__chevron-arrow-right ${config.style?.iconClasses?.chevronRight}`" @click="goToPeriod($event, 'next')"/>
       </div>
 
       <DatePicker
         ref="periodSelect"
+        :config="config"
         :mode="mode"
         :time-prop="time"
         :period-prop="period"
@@ -70,11 +63,6 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import DatePicker from './DatePicker.vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {
-  faChevronLeft,
-  faChevronRight,
-} from '@fortawesome/free-solid-svg-icons';
 import { configInterface } from '../../typings/config.interface';
 import Time from '../../helpers/Time';
 import { periodInterface } from '../../typings/interfaces/period.interface';
@@ -86,7 +74,6 @@ export default defineComponent({
 
   components: {
     DatePicker,
-    FontAwesomeIcon,
   },
 
   mixins: [getLanguage],
@@ -118,10 +105,6 @@ export default defineComponent({
         { value: 'week', label: 'Week' },
         { value: 'month', label: 'Month' },
       ],
-      icons: {
-        chevronLeft: faChevronLeft,
-        chevronRight: faChevronRight,
-      },
       currentPeriod: this.period,
       showModePicker: false,
     };
@@ -132,11 +115,11 @@ export default defineComponent({
       if (this.mode === 'week') {
         const startMonth = this.time.getLocalizedNameOfMonth(
           this.currentPeriod?.start,
-          'short'
+          'long'
         );
         const endMonth = this.time.getLocalizedNameOfMonth(
           this.currentPeriod?.end,
-          'short'
+          'long'
         );
 
         return startMonth === endMonth
@@ -148,7 +131,7 @@ export default defineComponent({
       return (
         this.time.getLocalizedNameOfMonth(
           this.currentPeriod?.selectedDate,
-          'short'
+          'long'
         ) +
         ' ' +
         this.currentPeriod.selectedDate.getFullYear()

@@ -10,25 +10,13 @@
     >
       <div class="event-flyout__menu">
         <span v-if="isEditable" class="event-flyout__menu-editable">
-          <font-awesome-icon
-            class="event-flyout__menu-item is-edit-icon"
-            :icon="icons.edit"
-            @click="editEvent"
-          />
+          <i :class="`event-flyout__menu-item is-edit-icon ${config.style?.iconClasses?.edit}`" @click="editEvent"/>
 
-          <font-awesome-icon
-            class="event-flyout__menu-item is-trash-icon"
-            :icon="icons.trash"
-            @click="deleteEvent"
-          />
+          <i :class="`event-flyout__menu-item is-trash-icon ${config.style?.iconClasses?.trash}`" @click="deleteEvent"/>
         </span>
 
         <span class="event-flyout__menu-close">
-          <font-awesome-icon
-            class="event-flyout__menu-item is-times-icon"
-            :icon="icons.times"
-            @click="closeFlyout"
-          />
+          <i :class="`event-flyout__menu-item is-times-icon ${config.style?.iconClasses?.times}`" @click="closeFlyout"/>
         </span>
       </div>
 
@@ -49,28 +37,22 @@
           v-if="calendarEvent.location"
           class="event-flyout__row is-location"
         >
-          <font-awesome-icon :icon="icons.location" />
+          <i :class="config.style?.iconClasses?.location"/>
           {{ calendarEvent.location }}
         </div>
 
         <div v-if="calendarEvent.with" class="event-flyout__row">
-          <font-awesome-icon :icon="icons.user" />
+          <i :class="config.style?.iconClasses?.user"/>
           {{ calendarEvent.with }}
         </div>
 
         <div v-if="calendarEvent.topic" class="event-flyout__row">
-          <font-awesome-icon
-            :icon="icons.topic"
-            class="calendar-week__event-icon"
-          />
+          <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.topic}`"/>
           {{ calendarEvent.topic }}
         </div>
 
         <div v-if="calendarEvent.description" class="event-flyout__row">
-          <font-awesome-icon
-            :icon="icons.description"
-            class="calendar-week__event-icon"
-          />
+          <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.description}`"/>
           <!-- eslint-disable vue/no-v-html -->
           <p v-html="calendarEvent.description" />
           <!--eslint-enable-->
@@ -92,16 +74,6 @@ import { eventInterface } from '../../typings/interfaces/event.interface';
 import EventFlyoutPosition, {
   EVENT_FLYOUT_WIDTH,
 } from '../../helpers/EventFlyoutPosition';
-import { faMapMarkerAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
-import {
-  faClock,
-  faComment,
-  faUser,
-  faEdit,
-  faTrashAlt,
-  faQuestionCircle,
-} from '@fortawesome/free-regular-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { configInterface } from '../../typings/config.interface';
 import Time from '../../helpers/Time';
 import {
@@ -112,10 +84,6 @@ const eventFlyoutPositionHelper = new EventFlyoutPosition();
 
 export default defineComponent({
   name: 'EventFlyout',
-
-  components: {
-    FontAwesomeIcon,
-  },
 
   props: {
     calendarEventProp: {
@@ -143,16 +111,6 @@ export default defineComponent({
       isVisible: false,
       top: 0 as number | null,
       left: 0 as number | null,
-      icons: {
-        clock: faClock,
-        user: faUser,
-        description: faComment,
-        trash: faTrashAlt,
-        edit: faEdit,
-        times: faTimes,
-        topic: faQuestionCircle,
-        location: faMapMarkerAlt,
-      },
       calendarEvent: this.calendarEventProp,
       flyoutWidth: EVENT_FLYOUT_WIDTH + 'px',
       colors: EVENT_COLORS,

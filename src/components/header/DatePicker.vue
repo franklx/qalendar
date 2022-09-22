@@ -9,7 +9,7 @@
       class="date-picker__value-display"
       @click="togglePeriodSelector"
     >
-      <font-awesome-icon :icon="icons.calendarIcon" />
+      <i :class="config.style?.iconClasses?.calendar"/>
       <span class="date-picker__value-display-text">{{ periodText }}</span>
     </div>
 
@@ -20,11 +20,7 @@
       @mouseleave="hideDatePicker"
     >
       <div class="date-picker__week-picker-navigation">
-        <font-awesome-icon
-          class="is-icon is-chevron-left"
-          :icon="icons.chevronLeft"
-          @click="toggleDatePickerPeriod('previous')"
-        />
+        <i :class="`is-icon is-chevron-left ${config.style?.iconClasses?.chevronLeft}`" @click="toggleDatePickerPeriod('previous')"/>
         <span class="date-picker__toggle-mode" @click="toggleDatePickerMode">
           <template v-if="datePickerMode === 'month'">
             {{
@@ -43,11 +39,7 @@
             }}
           </template>
         </span>
-        <font-awesome-icon
-          class="is-icon is-chevron-right"
-          :icon="icons.chevronRight"
-          @click="toggleDatePickerPeriod('next')"
-        />
+        <i :class="`is-icon is-chevron-right ${config.style?.iconClasses?.chevronRight}`" @click="toggleDatePickerPeriod('next')"/>
       </div>
 
       <div
@@ -103,18 +95,13 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {
-  faCalendarDay,
-  faChevronCircleLeft,
-  faChevronCircleRight,
-} from '@fortawesome/free-solid-svg-icons';
 import Time, {
   calendarMonthType,
   calendarWeekType,
   calendarYearMonths,
 } from '../../helpers/Time';
 import { periodInterface } from '../../typings/interfaces/period.interface';
+import { configInterface } from '../../typings/config.interface';
 import { modeType } from '../../typings/types';
 
 interface disableDates {
@@ -125,9 +112,11 @@ interface disableDates {
 export default defineComponent({
   name: 'DatePicker',
 
-  components: { FontAwesomeIcon },
-
   props: {
+    config: {
+      type: Object as PropType<configInterface>,
+      required: true,
+    },
     mode: {
       type: String as PropType<modeType>,
       default: 'week',
@@ -168,11 +157,6 @@ export default defineComponent({
       periodText: '',
       weekPickerDates: [] as calendarMonthType,
       monthPickerDates: [] as calendarYearMonths,
-      icons: {
-        calendarIcon: faCalendarDay,
-        chevronLeft: faChevronCircleLeft,
-        chevronRight: faChevronCircleRight,
-      },
       showDatePicker: !!(this.locale && this.firstDayOfWeek) as boolean, // Set to automatic show, when used as a standalone component
       /**
        * Though selectedDate might look identical to datePickerCurrentDate, it is not
