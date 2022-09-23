@@ -4,6 +4,8 @@
       {{ periodName }}
     </div>
 
+    <slot name="header"></slot>
+
     <div class="calendar-header__period">
       <div class="calendar-header__chevron-arrows">
         <i :class="`calendar-header__chevron-arrow calendar-header__chevron-arrow-left ${config.style?.iconClasses?.chevronLeft}`" @click="goToPeriod($event, 'previous')"/>

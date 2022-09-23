@@ -21,7 +21,11 @@
         :period="period"
         @change-mode="handleChangeMode"
         @updated-period="handleUpdatedPeriod"
-      />
+      >
+        <template #header>
+          <slot name="header"></slot>
+        </template>
+      </AppHeader>
 
       <Week
         v-if="['week', 'day'].includes(mode)"
