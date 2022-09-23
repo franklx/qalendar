@@ -68,6 +68,7 @@
         @updated-period="handleUpdatedPeriod($event, true)"
         @edit-event="$emit('edit-event', $event)"
         @delete-event="$emit('delete-event', $event)"
+        @day-was-clicked="$emit('day-was-clicked', $event)"
       >
         <template #eventDialog="p">
           <slot
@@ -129,6 +130,7 @@ export default defineComponent({
     'edit-event',
     'delete-event',
     'interval-was-clicked',
+    'day-was-clicked',
   ],
 
   data() {

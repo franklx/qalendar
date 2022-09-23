@@ -10,13 +10,13 @@
     >
       <div class="event-flyout__menu">
         <span v-if="isEditable" class="event-flyout__menu-editable">
-          <i :class="`event-flyout__menu-item is-edit-icon ${config.style?.iconClasses?.edit}`" @click="editEvent"/>
+          <i :class="`event-flyout__menu-item is-edit-icon ${config.style?.iconClasses?.edit}`" @click.stop="editEvent"/>
 
-          <i :class="`event-flyout__menu-item is-trash-icon ${config.style?.iconClasses?.trash}`" @click="deleteEvent"/>
+          <i :class="`event-flyout__menu-item is-trash-icon ${config.style?.iconClasses?.trash}`" @click.stop="deleteEvent"/>
         </span>
 
         <span class="event-flyout__menu-close">
-          <i :class="`event-flyout__menu-item is-times-icon ${config.style?.iconClasses?.times}`" @click="closeFlyout"/>
+          <i :class="`event-flyout__menu-item is-times-icon ${config.style?.iconClasses?.times}`" @click.stop="closeFlyout"/>
         </span>
       </div>
 

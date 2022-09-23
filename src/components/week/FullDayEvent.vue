@@ -9,7 +9,7 @@
       backgroundColor: eventBackgroundColor,
       zIndex: 1,
     }"
-    @click="handleClickOnEvent"
+    @click.stop="handleClickOnEvent"
   >
     {{ scheduleEvent.title }}
   </div>
@@ -109,7 +109,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .week-timeline__event {
   position: relative;
 

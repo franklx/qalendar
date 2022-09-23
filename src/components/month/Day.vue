@@ -7,6 +7,7 @@
     @dragover="handleDragOver"
     @drop="handleDrop"
     @dragend="handleDragEnd"
+    @click="handleDayClicked"
   >
     <span v-if="isFirstWeek" class="calendar-month__day-name">
       {{ day.dayName }}
@@ -77,7 +78,7 @@ export default defineComponent({
     },
   },
 
-  emits: ['event-was-clicked', 'event-was-dragged', 'updated-period'],
+  emits: ['event-was-clicked', 'event-was-dragged', 'updated-period', 'day-was-clicked'],
 
   data() {
     return {
@@ -146,11 +147,16 @@ export default defineComponent({
 
       return false;
     },
+
+    handleDayClicked(e: MouseEvent) {
+      e.preventDefault();
+      this.$emit('day-was-clicked', { intervalStart: this.day.dateTimeString });
+    },
   },
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .calendar-month__weekday {
   height: 100%;
   flex: 1;

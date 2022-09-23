@@ -5,7 +5,7 @@
     :class="{ 'is-draggable': elementDraggableAttribute }"
     :draggable="elementDraggableAttribute"
     @dragstart="handleDragStart"
-    @click="handleClickOnEvent"
+    @click.stop="handleClickOnEvent"
   >
     <span class="calendar-month__event-color" />
 
@@ -154,7 +154,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @use '../../styles/mixins' as mixins;
 
 .calendar-month__event {

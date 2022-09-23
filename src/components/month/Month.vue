@@ -16,6 +16,7 @@
           @event-was-clicked="handleClickOnEvent"
           @event-was-dragged="handleEventWasDragged"
           @updated-period="$emit('updated-period', $event)"
+          @day-was-clicked="$emit('day-was-clicked', $event)"
         />
       </div>
     </div>
@@ -92,6 +93,7 @@ export default defineComponent({
     'updated-period',
     'event-was-clicked',
     'event-was-dragged',
+    'day-was-clicked',
   ],
 
   data() {
@@ -201,7 +203,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .calendar-month {
   position: relative;
   flex: 1;

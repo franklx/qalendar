@@ -12,7 +12,7 @@
       color: eventColor,
       backgroundColor: eventBackgroundColor,
     }"
-    @click="handleClickOnEvent"
+    @click.stop="handleClickOnEvent"
     @mouseenter="showResizeElements = isEditable && !hasDisabledResize"
     @mouseleave="showResizeElements = false"
     @mousedown="handleMouseDown"
@@ -89,7 +89,7 @@
       'is-editable': isEditable,
       'has-disabled-dnd': hasDisabledDragAndDrop,
     }"
-    @click="handleClickOnEvent"
+    @click.stop="handleClickOnEvent"
     @mousedown="handleMouseDown"
   >
     <slot name="event" :event-data="event"> </slot>
