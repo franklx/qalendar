@@ -258,6 +258,17 @@ export default class Time {
     };
   }
 
+  stringToDate(dateTimeString: string) {
+    if (dateTimeString) {
+      const { year, month, date, hour, minutes } = this.getAllVariablesFromDateTimeString(dateTimeString);
+      const newDate = new Date(year, month, date, hour, minutes);
+      return !isNaN(newDate.getTime()) ? newDate : null;
+    }
+    else {
+      return null;
+    }
+  }
+
   dateIsToday(date: Date) {
     const {
       fullYear: yearToday,
