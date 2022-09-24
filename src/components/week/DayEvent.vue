@@ -222,14 +222,16 @@ export default defineComponent({
     hasDisabledDragAndDrop() {
       return !!(
         this.eventProp.disableDnD &&
-        this.eventProp.disableDnD.includes(this.mode)
+        (this.eventProp.disableDnD === true ||
+        this.eventProp.disableDnD.includes(this.mode))
       );
     },
 
     hasDisabledResize() {
       return !!(
         this.eventProp.disableResize &&
-        this.eventProp.disableResize.includes(this.mode)
+        (this.eventProp.disableResize === true ||
+        this.eventProp.disableResize.includes(this.mode))
       );
     },
 

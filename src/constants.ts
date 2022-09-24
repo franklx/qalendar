@@ -7,6 +7,7 @@ export const EVENT_COLORS = {
   purple: "rgb(157, 114, 245)",
   turquoise: "rgb(64, 190, 190)",
   brown: "rgb(169, 99, 30)",
+  black: "rgb(0, 0, 0)",
 };
 
 export const DATE_TIME_STRING_PATTERN = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;

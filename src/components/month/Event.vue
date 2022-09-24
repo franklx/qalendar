@@ -96,7 +96,8 @@ export default defineComponent({
 
       const dragAndDropIsDisabled =
         this.calendarEvent.disableDnD &&
-        this.calendarEvent.disableDnD.includes('month');
+        (this.calendarEvent.disableDnD === true ||
+        this.calendarEvent.disableDnD.includes('month'));
 
       return this.calendarEvent.isEditable &&
         eventIsSingleDay &&
