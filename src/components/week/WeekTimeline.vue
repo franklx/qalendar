@@ -8,6 +8,7 @@
         'is-today':
           time.getDateTimeStringFromDate(now, 'start') === day.dateTimeString,
       }"
+      @click="$emit('day-was-clicked', day.dateTimeString.substring(0, 10))"
     >
       <div class="week-timeline__day-name">
         {{ day.dayName.substring(0, 2).toUpperCase() }}
@@ -18,7 +19,10 @@
       </div>
 
       <div class="week-timeline__events">
-        <template v-for="(event, key) in day.fullDayEvents" :key="key">
+        <template
+          v-for="(event, key) in day.fullDayEvents"
+          :key="key"
+        >
           <FullDayEvent
             v-if="key !== 'date'"
             :schedule-event="typeof event === 'object' ? event : null"
@@ -69,7 +73,7 @@ export default defineComponent({
     },
   },
 
-  emits: ['event-was-clicked'],
+  emits: ['event-was-clicked', 'day-was-clicked'],
 
   data() {
     return {

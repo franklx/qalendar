@@ -20,8 +20,14 @@
         </span>
       </div>
 
-      <div v-if="calendarEvent" class="event-flyout__info-wrapper">
-        <div v-if="calendarEvent.title" class="event-flyout__row is-title">
+      <div
+        v-if="calendarEvent"
+        class="event-flyout__info-wrapper"
+      >
+        <div
+          v-if="calendarEvent.title"
+          class="event-flyout__row is-title"
+        >
           <div
             class="event-flyout__color-icon"
             :style="{ backgroundColor: eventBackgroundColor }"
@@ -29,7 +35,10 @@
           {{ calendarEvent.title }}
         </div>
 
-        <div v-if="calendarEvent.time" class="event-flyout__row is-time">
+        <div
+          v-if="calendarEvent.time"
+          class="event-flyout__row is-time"
+        >
           {{ getEventTime }}
         </div>
 
@@ -64,7 +73,7 @@
       v-else
       :event-dialog-data="calendarEvent"
       :close-event-dialog="closeFlyout"
-    ></slot>
+    />
   </div>
 </template>
 
@@ -122,7 +131,39 @@ export default defineComponent({
       // 1. Null handling
       if (!this.calendarEvent || !this.calendarEvent.time) return null;
 
-      // 2. Handle full day events
+      // 2. Handle multiple day events
+      // Important: This must always be evaluated before checking if the event is a full day event
+      // Because day 2 until (last day - 1) of a multiple day event, will technically be a full day event,
+      // but we still want to display the original start and end time
+      if (this.calendarEvent.originalEvent) {
+        const {
+          year: startYear,
+          month: startMonth,
+          date: startDate,
+          hour: startHour,
+          minutes: startMinutes,
+        } = this.time.getAllVariablesFromDateTimeString(this.calendarEvent.originalEvent.time.start)
+
+        const startLocalizedString = this.getDateFromDateString(
+          this.calendarEvent.originalEvent.time.start
+        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.originalEvent.time.start)
+
+        const {
+          year: endYear,
+          month: endMonth,
+          date: endDate,
+          hour: endHour,
+          minutes: endMinutes,
+        } = this.time.getAllVariablesFromDateTimeString(this.calendarEvent.originalEvent.time.end)
+
+        const endLocalizedString = this.getDateFromDateString(
+          this.calendarEvent.originalEvent.time.end
+        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.originalEvent.time.end)
+
+        return `${startLocalizedString} - ${endLocalizedString}`;
+      }
+
+      // 3. Handle full day events
       if (
         DATE_TIME_STRING_FULL_DAY_PATTERN.test(this.calendarEvent.time.start)
       ) {
@@ -135,7 +176,7 @@ export default defineComponent({
         return `${startDate} - ${endDate}`;
       }
 
-      // 3. Handle timed events
+      // 4. Handle timed events
       const dateString = this.getDateFromDateString(
         this.calendarEvent.time.start
       );
@@ -148,12 +189,12 @@ export default defineComponent({
     },
 
     eventFlyoutInlineStyles() {
-      if ([typeof this.top, typeof this.left].some((x) => x !== 'number')) {
+      if (typeof this.top === 'number' && !this.left) {
         return {
-          top: '50%',
+          top: this.top + 'px',
           left: '50%',
-          position: 'absolute' as const, // casting, since tsc otherwise thinks we're casting 'string' to 'PositionProperty'
-          transform: 'translate(-50%, -50%)',
+          position: 'fixed' as const,
+          transform: 'translateX(-50%)',
         };
       }
 
@@ -193,7 +234,7 @@ export default defineComponent({
         setTimeout(() => {
           this.calendarEvent = value;
           this.isVisible = !!value;
-          this.setFlyoutPosition();
+          this.$nextTick(() => this.setFlyoutPosition());
         }, 10);
       },
     },
@@ -223,8 +264,8 @@ export default defineComponent({
         calendar ? calendar.getBoundingClientRect() : null
       );
 
-      this.top = flyoutPosition?.top || null;
-      this.left = flyoutPosition?.left || null;
+      this.top = typeof flyoutPosition?.top === 'number' ? flyoutPosition.top : null;
+      this.left = typeof flyoutPosition?.left === 'number' ? flyoutPosition.left : null;
     },
 
     editEvent() {

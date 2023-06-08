@@ -9,11 +9,12 @@
       "groupName": "devDependencies (non-major)"
     }
   ],
-  "schedule": ["before 5am on monday"],
+  "schedule": ["before 5am on the first day of the month"],
   "ignoreDeps": [
     "vite",
     "@vitejs/plugin-vue",
-    "vue"
+    "vue",
+    "cypress"
   ],
   "ignorePaths": ["**/.circleci/**"]
 }

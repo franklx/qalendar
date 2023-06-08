@@ -6,11 +6,15 @@
         'mode-is-day': mode === 'day',
         'mode-is-week': mode === 'week',
         'mode-is-month': mode === 'month',
-        'qalendar-is-small': calendarWidth < 700,
+        'qalendar-is-small': isSmall,
       }"
+      :data-lang="config?.locale?.substring(0, 2) || 'en'"
     >
       <Transition name="loading">
-        <div v-if="isLoading" class="top-bar-loader" />
+        <div
+          v-if="isLoading"
+          class="top-bar-loader"
+        />
       </Transition>
 
       <AppHeader
@@ -19,6 +23,7 @@
         :mode="mode"
         :time="time"
         :period="period"
+        :is-small="isSmall"
         @change-mode="handleChangeMode"
         @updated-period="handleUpdatedPeriod"
       >
@@ -34,7 +39,6 @@
         :period="period"
         :config="config"
         :mode-prop="mode"
-        :n-days="week.nDays"
         :time="time"
         @event-was-clicked="$emit('event-was-clicked', $event)"
         @event-was-resized="handleEventWasUpdated($event, 'resized')"
@@ -42,9 +46,13 @@
         @edit-event="$emit('edit-event', $event)"
         @delete-event="$emit('delete-event', $event)"
         @interval-was-clicked="$emit('interval-was-clicked', $event)"
+        @day-was-clicked="$emit('day-was-clicked', $event)"
       >
-        <template #event="p">
-          <slot :event-data="p.eventData" name="event"></slot>
+        <template #weekDayEvent="p">
+          <slot
+            :event-data="p.eventData"
+            name="weekDayEvent"
+          />
         </template>
 
         <template #eventDialog="p">
@@ -52,7 +60,11 @@
             name="eventDialog"
             :event-dialog-data="p.eventDialogData"
             :close-event-dialog="p.closeEventDialog"
-          ></slot>
+          />
+        </template>
+
+        <template #customCurrentTime>
+          <slot name="customCurrentTime" />
         </template>
       </Week>
 
@@ -64,18 +76,32 @@
         :config="config"
         :period="period"
         @event-was-clicked="$emit('event-was-clicked', $event)"
+        @day-was-clicked="$emit('day-was-clicked', $event)"
         @event-was-dragged="handleEventWasUpdated($event, 'dragged')"
         @updated-period="handleUpdatedPeriod($event, true)"
         @edit-event="$emit('edit-event', $event)"
         @delete-event="$emit('delete-event', $event)"
-        @day-was-clicked="$emit('day-was-clicked', $event)"
       >
         <template #eventDialog="p">
           <slot
             name="eventDialog"
             :event-dialog-data="p.eventDialogData"
             :close-event-dialog="p.closeEventDialog"
-          ></slot>
+          />
+        </template>
+
+        <template #monthEvent="p">
+          <slot
+            :event-data="p.eventData"
+            name="monthEvent"
+          />
+        </template>
+
+        <template #dayCell="{dayData}">
+          <slot
+            :day-data="dayData"
+            name="dayCell"
+          />
         </template>
       </Month>
     </div>
@@ -92,6 +118,7 @@ import Week from './components/week/Week.vue';
 import { modeType } from './typings/types';
 import Month from './components/month/Month.vue';
 import Errors from './helpers/Errors';
+import { DATE_TIME_STRING_FULL_DAY_PATTERN } from './constants';
 
 export default defineComponent({
   name: 'Qalendar',
@@ -141,19 +168,20 @@ export default defineComponent({
         end: new Date(),
         selectedDate: this.selectedDate ? this.selectedDate : new Date(),
       },
-      week: {
-        nDays: this.config?.week?.nDays || 7,
-      },
       mode: this.config?.defaultMode || ('week' as modeType),
-      time: new Time(
-        this.config?.week?.startsOn,
-        this.config?.locale || null
-      ) as Time | any,
+      time: new Time(this.config?.week?.startsOn, this.config?.locale || null, {
+        start: this.setTimePointsFromDayBoundary(
+          this.config?.dayBoundaries?.start || 0
+        ),
+        end: this.setTimePointsFromDayBoundary(
+          this.config?.dayBoundaries?.end || 24
+        ),
+      }) as Time | any,
       fontFamily:
         this.config?.style?.fontFamily || "'Verdana', 'Open Sans', serif",
-      calendarWidth: 0,
       eventRenderingKey: 0, // Works only as a dummy value, for re-rendering Month- and Week components, when events-watcher triggers
       eventsDataProperty: this.events || [],
+      isSmall: false,
     };
   },
 
@@ -164,7 +192,7 @@ export default defineComponent({
         // The check on strict equality as primitive values is needed,
         // since we do not want to trigger a rerender on event-was-resized
         if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
-          this.eventsDataProperty = newVal;
+          this.eventsDataProperty = this.processEvents(newVal);
           this.eventRenderingKey = this.eventRenderingKey + 1;
         }
 
@@ -206,12 +234,12 @@ export default defineComponent({
      * */
     handleUpdatedPeriod(
       value: { start: Date; end: Date; selectedDate: Date },
-      setModeWeek = false
+      leaveMonthMode = false
     ) {
       this.$emit('updated-period', { start: value.start, end: value.end });
       this.period = value;
 
-      if (setModeWeek) this.mode = 'week';
+      if (leaveMonthMode) this.mode = this.isSmall ? 'day' : 'week';
     },
 
     /**
@@ -257,15 +285,15 @@ export default defineComponent({
         .fontSize.split('p')[0];
       const breakPointFor1RemEquals16px = 700;
       const multiplier = 16 / documentFontSize;
-      const dayModeBreakpoint = breakPointFor1RemEquals16px / multiplier; // For 16px root font-size, break point is at 43.75rem
+      const smallCalendarBreakpoint = breakPointFor1RemEquals16px / multiplier; // For 16px root font-size, break point is at 43.75rem
 
       if (!calendarRoot) return;
 
-      this.calendarWidth = calendarRoot.clientWidth;
+      this.isSmall = calendarRoot.clientWidth < smallCalendarBreakpoint;
 
-      if (this.calendarWidth < dayModeBreakpoint) this.mode = 'day';
-      if (this.calendarWidth >= dayModeBreakpoint)
-        this.mode = this.config?.defaultMode || 'week';
+      if (this.isSmall && !['day', 'month'].includes(this.mode)) {
+        this.mode = 'day';
+      }
     },
 
     setPeriodOnMount() {
@@ -295,6 +323,132 @@ export default defineComponent({
       );
       this.eventsDataProperty = [calendarEvent, ...newEvents];
       this.$emit(`event-was-${eventType}`, calendarEvent);
+    },
+
+    setTimePointsFromDayBoundary(boundary: number) {
+      // Only allow integers between 0 and 24
+      if (boundary < 0 || boundary > 24 || boundary % 1 !== 0)
+        throw new Error('Invalid day boundary');
+
+      if (boundary === 0) return boundary;
+
+      return boundary * 100;
+    },
+
+    processEvents(events: eventInterface[]) {
+      return events.reduce((processedEvents: eventInterface[], event) => {
+        const allEvents = processedEvents;
+
+        // For all single day events { start: '2022-01-01 00:00', end: '2022-01-01 01:00' },
+        // or non-timed full day events { start: '2022-01-01', end: '2022-01-04' },
+        // just push them to the array
+        if (
+          event.time.start.substring(0, 10) ===
+            event.time.end.substring(0, 10) ||
+          DATE_TIME_STRING_FULL_DAY_PATTERN.test(event.time.start)
+        ) {
+          allEvents.push(event);
+        }
+
+        // For all multiple-day events, that are also timed { start: '2022-01-01 10:00', end: '2022-01-04 01:00' }
+        // do the following:
+        else {
+          // 1. Create the first day event as a normal timed event
+          const {
+            year: firstDayYear,
+            month: firstDayMonth,
+            date: firstDayDate,
+          } = this.time.getAllVariablesFromDateTimeString(event.time.start);
+
+          allEvents.push({
+            ...event,
+            time: {
+              start: event.time.start,
+              end: this.time.getDateTimeStringFromDate(
+                new Date(
+                  firstDayYear,
+                  firstDayMonth,
+                  firstDayDate,
+                  23,
+                  59,
+                  59,
+                  999
+                )
+              ),
+            },
+            originalEvent: event,
+            isEditable: false, // Multiple-day events cannot be dragged or resized
+          });
+
+          // 2. Create a multiple-day full-day event, that stretches from day 2 until day (end - 1)
+          const day2Start = this.time.addDaysToDateTimeString(
+            1,
+            event.time.start.substring(0, 10)
+          );
+          const endDateMinus1Day = this.time.addDaysToDateTimeString(
+            -1,
+            event.time.end.substring(0, 10)
+          );
+
+          if (endDateMinus1Day >= day2Start) {
+            const {
+              year: startYear,
+              month: startMonth,
+              date: startDate,
+            } = this.time.getAllVariablesFromDateTimeString(day2Start);
+
+            const {
+              year: endYear,
+              month: endMonth,
+              date: endDate,
+            } = this.time.getAllVariablesFromDateTimeString(endDateMinus1Day);
+
+            allEvents.push({
+              ...event,
+              time: {
+                start: this.time.getDateStringFromDate(
+                  new Date(startYear, startMonth, startDate)
+                ),
+                end: this.time.getDateStringFromDate(
+                  new Date(endYear, endMonth, endDate)
+                ),
+              },
+              originalEvent: event,
+            });
+          }
+
+          // 3. Add the last day of the multiple day event
+          const {
+            year: lastDayYear,
+            month: lastDayMonth,
+            date: lastDayDate,
+            hour: lastDayHour,
+            minutes: lastDayMinute,
+          } = this.time.getAllVariablesFromDateTimeString(event.time.end);
+
+          allEvents.push({
+            ...event,
+            time: {
+              start: this.time.getDateTimeStringFromDate(
+                new Date(lastDayYear, lastDayMonth, lastDayDate, 0, 0, 0)
+              ),
+              end: this.time.getDateTimeStringFromDate(
+                new Date(
+                  lastDayYear,
+                  lastDayMonth,
+                  lastDayDate,
+                  lastDayHour,
+                  lastDayMinute
+                )
+              ),
+            },
+            originalEvent: event,
+            // Multiple-day events cannot be dragged or resized
+          });
+        }
+
+        return allEvents;
+      }, []);
     },
   },
 });

@@ -15,9 +15,23 @@
           :time="time"
           @event-was-clicked="handleClickOnEvent"
           @event-was-dragged="handleEventWasDragged"
-          @updated-period="$emit('updated-period', $event)"
           @day-was-clicked="$emit('day-was-clicked', $event)"
-        />
+          @updated-period="$emit('updated-period', $event)"
+        >
+          <template #monthEvent="p">
+            <slot
+              :event-data="p.eventData"
+              name="monthEvent"
+            />
+          </template>
+
+          <template #dayCell="{dayData}">
+            <slot
+              :day-data="dayData"
+              name="dayCell"
+            />
+          </template>
+        </Day>
       </div>
     </div>
 
@@ -36,7 +50,7 @@
           name="eventDialog"
           :event-dialog-data="p.eventDialogData"
           :close-event-dialog="p.closeEventDialog"
-        ></slot>
+        />
       </template>
     </EventFlyout>
   </div>
@@ -148,6 +162,7 @@ export default defineComponent({
           });
 
           return {
+            isTrailingOrLeadingDate: this.time.isTrailingOrLeadingDate(day, month),
             dayName: this.time.getLocalizedNameOfWeekday(day),
             dateTimeString: this.time.getDateTimeStringFromDate(day),
             events: events,
@@ -220,6 +235,10 @@ export default defineComponent({
   .calendar-month__week {
     display: flex;
     flex: 1;
+
+    .qalendar-is-small & {
+      display: block;
+    }
   }
 }
 </style>

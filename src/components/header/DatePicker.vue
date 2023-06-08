@@ -1,7 +1,7 @@
 <template>
   <div
     class="date-picker"
-    :class="{ 'date-picker-root': isStandAloneComponent }"
+    :class="isStandAloneComponent ? 'date-picker-root' : 'is-in-qalendar'"
     @mouseleave="hideDatePicker"
   >
     <div
@@ -46,7 +46,10 @@
         v-if="datePickerMode === 'month'"
         class="date-picker__day-names week"
       >
-        <span v-for="day in weekDays" :key="day.getDate()">
+        <span
+          v-for="day in weekDays"
+          :key="day.getDate()"
+        >
           {{ time.getLocalizedNameOfWeekday(day, 'short') }}
         </span>
       </div>
@@ -79,7 +82,10 @@
         </span>
       </div>
 
-      <div v-show="datePickerMode === 'year'" class="months">
+      <div
+        v-show="datePickerMode === 'year'"
+        class="months"
+      >
         <span
           v-for="(date, monthIndex) in monthPickerDates"
           :key="monthIndex"
@@ -361,33 +367,23 @@ export default defineComponent({
           this.datePickerCurrentDate
         );
         newDate = new Date(week[0]);
-        newDatePayload =
-          direction === 'next' ? newDate.getDate() + 7 : newDate.getDate() - 7;
+        newDatePayload = direction === 'next' ? newDate.getDate() + 7 : newDate.getDate() - 7;
+        newDate.setDate(newDatePayload);
       } else if (this.mode === 'month') {
         newDate = new Date(this.datePickerCurrentDate);
-        const nDaysNextMonth = new Date(
-          this.datePickerCurrentDate.getFullYear(),
-          this.datePickerCurrentDate.getMonth() + 2,
-          0
-        ).getDate();
-        const nDaysPreviousMonth = new Date(
-          this.datePickerCurrentDate.getFullYear(),
-          this.datePickerCurrentDate.getMonth(),
-          0
-        ).getDate();
-
-        newDatePayload =
+        newDate.setMonth(
           direction === 'next'
-            ? newDate.getDate() + nDaysNextMonth
-            : newDate.getDate() - nDaysPreviousMonth;
+            ? newDate.getMonth() + 1
+            : newDate.getMonth() - 1
+        );
+        newDate.setDate(1);
       } else {
         // day
         newDate = new Date(this.datePickerCurrentDate);
-        newDatePayload =
-          direction === 'next' ? newDate.getDate() + 1 : newDate.getDate() - 1;
+        newDatePayload = direction === 'next' ? newDate.getDate() + 1 : newDate.getDate() - 1;
+        newDate.setDate(newDatePayload);
       }
 
-      newDate.setDate(newDatePayload);
       this.setWeek(newDate);
     },
 
@@ -422,16 +418,25 @@ export default defineComponent({
 .date-picker {
   position: relative;
   width: fit-content;
+  min-width: 16rem;
 
-  @include mixins.screen-size-m {
-    min-width: 300px;
+  .mode-is-month & {
+    min-width: 8rem;
+  }
+
+  .mode-is-day & {
+    min-width: 10rem;
+  }
+
+  .qalendar-is-small & {
+    min-width: initial;
   }
 
   &:not(.is-in-qalendar) {
-    margin: 0 auto;
+    min-width: initial;
 
-    @include mixins.screen-size-m {
-      min-width: initial;
+    .qalendar-is-small & {
+      margin: 0 auto;
     }
   }
 
@@ -446,24 +451,25 @@ export default defineComponent({
     justify-content: center;
     gap: var(--qalendar-spacing-half);
     user-select: none;
+    border: var(--qalendar-border-gray-thin);
 
-    @include mixins.screen-size-m {
-      border: var(--qalendar-border-gray-thin);
+    .qalendar-is-small & {
+      border: 0;
     }
 
     .date-picker__value-display-text {
-      display: none;
+      display: initial;
 
-      @include mixins.screen-size-m {
-        display: initial;
+      .qalendar-is-small & {
+        display: none;
       }
     }
 
     svg {
-      font-size: var(--qalendar-font-l);
+      font-size: initial;
 
-      @include mixins.screen-size-m {
-        font-size: initial;
+      .qalendar-is-small & {
+        font-size: var(--qalendar-font-l);
       }
     }
   }
@@ -486,9 +492,12 @@ export default defineComponent({
       .mode-is-week & {
         // week-picker can only be centered, if it is not the most far-right element in header
         // which is the case in month- and week mode, but not in day mode
-        @include mixins.screen-size-m {
-          left: 50%;
-          transform: translateX(-50%);
+        left: 50%;
+        transform: translateX(-50%);
+
+        .qalendar-is-small & {
+          left: initial;
+          transform: initial;
         }
       }
     }
@@ -568,6 +577,10 @@ export default defineComponent({
       &.is-disabled {
         color: darkgray;
         cursor: not-allowed;
+      }
+
+      [data-lang="ar"] & {
+        font-size: 0.65rem;
       }
     }
   }

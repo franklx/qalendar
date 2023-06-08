@@ -1,5 +1,8 @@
 <template>
-  <div class="calendar-week__day">
+  <div
+    class="calendar-week__day"
+    @click.self="$emit('day-was-clicked', day.dateTimeString.substring(0, 10))"
+  >
     <DayEvent
       v-for="(event, eventIndex) in events"
       :key="eventIndex"
@@ -12,9 +15,14 @@
       @event-was-clicked="$emit('event-was-clicked', $event)"
       @event-was-dragged="$emit('event-was-dragged', $event)"
       @event-was-resized="handleEventWasResized"
+      @drag-start="$emit('drag-start')"
+      @drag-end="$emit('drag-end')"
     >
-      <template #event="p">
-        <slot :event-data="p.eventData" name="event"></slot>
+      <template #weekDayEvent="p">
+        <slot
+          :event-data="p.eventData"
+          name="weekDayEvent"
+        />
       </template>
     </DayEvent>
 
@@ -85,15 +93,15 @@ export default defineComponent({
     'event-was-resized',
     'event-was-dragged',
     'interval-was-clicked',
+    'day-was-clicked',
+    'drag-start',
+    'drag-end',
   ],
 
   data() {
     return {
       events: [] as eventInterface[],
-      intervals: new DayIntervals(
-        this.dayIntervals.length || 60,
-        this.day.dateTimeString
-      ).getIntervals(),
+      intervals: [] as interval[],
     };
   },
 
@@ -107,6 +115,7 @@ export default defineComponent({
 
   mounted() {
     this.calculateEventConcurrency();
+    if (this.dayIntervals.displayClickableInterval) this.setClickableIntervals();
   },
 
   methods: {
@@ -124,6 +133,20 @@ export default defineComponent({
     handleClickOnInterval(payload: interval) {
       const { intervalStart, intervalEnd } = payload;
       this.$emit('interval-was-clicked', { intervalStart, intervalEnd });
+    },
+
+    setClickableIntervals() {
+      let dayStartTimeString = this.day.dateTimeString
+      if (this.time.DAY_START !== 0) {
+        const { hour: startHour } = this.time.getHourAndMinutesFromTimePoints(this.time.DAY_START)
+        dayStartTimeString = this.time.setSegmentOfDateTimeString(dayStartTimeString, { hour: startHour })
+      }
+
+      this.intervals = new DayIntervals(
+        this.dayIntervals.length || 60,
+        dayStartTimeString,
+        this.time.HOURS_PER_DAY,
+      ).getIntervals()
     },
   },
 });

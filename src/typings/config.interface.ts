@@ -73,11 +73,22 @@ export interface configInterface {
     iconClasses?: iconClasses;
   };
   defaultMode?: modeType;
-  disableModes?: ('week'|'month')[];
+  disableModes?: ('week'|'month'|string)[];
   isSilent?: boolean;
   dayIntervals?: dayIntervalsType;
   eventDialog?: {
     isDisabled?: boolean;
     isCustom?: boolean;
+  }
+  dayBoundaries?: {
+    start: number; // integer between 0 and 24
+    end: number; // integer between 0 and 24
+  }
+  showCurrentTime?: boolean;
+
+  //specific settings for month view
+  month?:{
+    //Hide the days of the next month and previous month in calendar to enhance the appearance
+    showTrailingAndLeadingDates?:boolean
   }
 }

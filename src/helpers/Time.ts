@@ -12,13 +12,15 @@ export default class Time {
   ALL_HOURS: dayStartOrEnd[];
   DAY_START: number;
   DAY_END: number;
+  HOURS_PER_DAY = 24;
   MS_PER_DAY: number
 
   constructor(
-    firstDayOfWeekIs: "sunday" | "monday" = "monday",
-    locale: string | null = null
+    firstDayOfWeek: "sunday" | "monday" = "monday",
+    locale: string | null = null,
+    dayBoundaries: { start: dayStartOrEnd; end: dayStartOrEnd } = { start: 0, end: 2400 }
   ) {
-    this.FIRST_DAY_OF_WEEK = firstDayOfWeekIs;
+    this.FIRST_DAY_OF_WEEK = firstDayOfWeek;
     this.CALENDAR_LOCALE = locale
       ? locale
       : Helpers.getBrowserNavigatorLocale();
@@ -26,8 +28,17 @@ export default class Time {
       0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300,
       1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400,
     ];
-    this.DAY_START = 0;
-    this.DAY_END = 2400;
+    this.DAY_START = dayBoundaries.start;
+    this.DAY_END = dayBoundaries.end;
+    this.HOURS_PER_DAY = (() => {
+      const convertTimePointToHours = (timePoint: number) => {
+        if (timePoint === 0) return 0;
+
+        return timePoint / 100;
+      }
+
+      return convertTimePointToHours(this.DAY_END) - convertTimePointToHours(this.DAY_START);
+    })()
     this.MS_PER_DAY = 86400000;
   }
 
@@ -85,7 +96,7 @@ export default class Time {
       : new Date();
 
     // 1. Get the first date of the month, and push the full week of this date into the month list
-    let firstDateOfMonth = new Date(
+    const firstDateOfMonth = new Date(
       selectedDate.getFullYear(),
       selectedDate.getMonth(),
       1
@@ -346,5 +357,54 @@ export default class Time {
       59,
       999
     )
+  }
+
+  protected turnMinutesIntoPercentageOfHour(minutes: number): string {
+    const oneMinutePercentage = 100 / 60;
+
+    const minutePoints = oneMinutePercentage * minutes;
+
+    if (minutePoints < 10) return "0" + minutePoints;
+
+    return minutePoints.toString();
+  }
+
+  /**
+   * Every hour between 'dayStart' and 'dayEnd' is 100, in this function referred to as 100 points
+   * If an event starts 30 minutes after 'dayStart', it should have 50 pointsIntoDay
+   * If a day consists of 4 hours (400 points), we then have to count
+   * (50 / 400) * 100 = 12.5 => event starts after 12.5 percent of the day
+   *
+   * Result is supposed to be a number between 0 and 100, and is used for setting the CSS- top- and height-attributes for events
+   * */
+  getPercentageOfDayFromDateTimeString(
+    dateTimeString: string,
+    dayStart: number,
+    dayEnd: number
+  ) {
+    const pointsInDay = dayEnd - dayStart;
+    const hour = dateTimeString.substring(11, 13);
+    const minutes = dateTimeString.substring(14, 16);
+    const minutesPoints = this.turnMinutesIntoPercentageOfHour(+minutes);
+    const eventPoints = +(hour + minutesPoints);
+    const eventPointsIntoDay = eventPoints - dayStart;
+
+    return (eventPointsIntoDay / pointsInDay) * 100;
+  }
+
+  setSegmentOfDateTimeString(dateTimeString: string, segments: { hour: number|string }) {
+    if (segments.hour < 0 || segments.hour > 23) throw new Error('Invalid hour')
+
+    segments.hour = String(segments.hour < 10 ? "0" + segments.hour : segments.hour)
+
+    dateTimeString = dateTimeString.replace(/\d{2}:/, segments.hour + ":")
+
+    return dateTimeString
+  }
+
+  isTrailingOrLeadingDate(date: Date, month: number) {
+    const { month: dateMonth } = new EDate(date);
+
+    return month !== dateMonth
   }
 }

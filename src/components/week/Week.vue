@@ -6,10 +6,46 @@
     :config="config"
     :mode="mode"
     @event-was-clicked="handleClickOnEvent"
+    @day-was-clicked="$emit('day-was-clicked', $event)"
   />
 
   <div class="calendar-week__wrapper">
+    <EventFlyout
+      v-if="!config.eventDialog || !config.eventDialog.isDisabled"
+      :calendar-event-prop="selectedEvent"
+      :event-element="selectedEventElement"
+      :time="time"
+      :config="config"
+      @hide="selectedEvent = null"
+      @edit-event="$emit('edit-event', $event)"
+      @delete-event="$emit('delete-event', $event)"
+    >
+      <template #default="p">
+        <slot
+          name="eventDialog"
+          :event-dialog-data="p.eventDialogData"
+          :close-event-dialog="p.closeEventDialog"
+        />
+      </template>
+    </EventFlyout>
+
     <section class="calendar-week">
+      <div
+        v-if="hasCustomCurrentTimeSlot && showCurrentTime"
+        class="custom-current-time"
+        :style="{ top: `${currentTimePercentage}%` }"
+      >
+        <slot name="customCurrentTime" />
+      </div>
+
+      <div
+        v-else-if="config && config.showCurrentTime && showCurrentTime"
+        class="current-time-line"
+        :style="{ top: `${currentTimePercentage}%` }"
+      >
+        <div class="current-time-line__circle" />
+      </div>
+
       <DayTimeline
         :key="period.start.getTime() + period.end.getTime() + mode"
         :time="time"
@@ -31,37 +67,24 @@
           @event-was-resized="$emit('event-was-resized', $event)"
           @event-was-dragged="handleEventWasDragged"
           @interval-was-clicked="$emit('interval-was-clicked', $event)"
+          @day-was-clicked="$emit('day-was-clicked', $event)"
+          @drag-start="destroyScrollbarAndHideOverflow"
+          @drag-end="initScrollbar"
         >
-          <template #event="p">
-            <slot :event-data="p.eventData" name="event"></slot>
+          <template #weekDayEvent="p">
+            <slot
+              :event-data="p.eventData"
+              name="weekDayEvent"
+            />
           </template>
         </Day>
       </div>
     </section>
-
-    <EventFlyout
-      v-if="!config.eventDialog || !config.eventDialog.isDisabled"
-      :calendar-event-prop="selectedEvent"
-      :event-element="selectedEventElement"
-      :time="time"
-      :config="config"
-      @hide="selectedEvent = null"
-      @edit-event="$emit('edit-event', $event)"
-      @delete-event="$emit('delete-event', $event)"
-    >
-      <template #default="p">
-        <slot
-          name="eventDialog"
-          :event-dialog-data="p.eventDialogData"
-          :close-event-dialog="p.closeEventDialog"
-        ></slot>
-      </template>
-    </EventFlyout>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, PropType, Comment, Text, Slot, VNode } from 'vue';
 import {
   configInterface,
   dayIntervalsType,
@@ -83,6 +106,7 @@ import { fullDayEventsWeek } from '../../typings/interfaces/full-day-events-week
 import { modeType } from '../../typings/types';
 const eventPosition = new EventPosition();
 import PerfectScrollbar from 'perfect-scrollbar';
+import Helpers from '../../helpers/Helpers';
 
 export default defineComponent({
   name: 'Week',
@@ -107,10 +131,6 @@ export default defineComponent({
       type: Object as PropType<periodInterface>,
       required: true,
     },
-    nDays: {
-      type: Number as PropType<5 | 7>,
-      required: true,
-    },
     modeProp: {
       type: String as PropType<modeType>,
       default: 'week',
@@ -128,6 +148,7 @@ export default defineComponent({
     'edit-event',
     'delete-event',
     'interval-was-clicked',
+    'day-was-clicked',
   ],
 
   data() {
@@ -145,7 +166,21 @@ export default defineComponent({
       } as dayIntervalsType | any,
       weekHeight: '1584px', // Correlates to the initial values of dayIntervals.length and dayIntervals.height
       scrollbar: null as any,
+      currentTimePercentage: 0,
+      // When dayBoundaries are set, and the current time is outside the dayBoundaries, this property is set to false,
+      // in order to hide the current time line
+      showCurrentTime: !!this.config?.showCurrentTime,
     };
+  },
+
+  computed: {
+    hasCustomCurrentTimeSlot() {
+      return Helpers.hasSlotContent(this.$slots.customCurrentTime)
+    },
+
+    nDays() {
+      return this.config?.week?.nDays || 7;
+    }
   },
 
   watch: {
@@ -166,10 +201,11 @@ export default defineComponent({
 
   mounted() {
     this.setDayIntervals();
-    this.filterOutFullDayEvents();
+    this.separateFullDayEventsFromOtherEvents();
     this.setInitialEvents(this.modeProp);
     this.scrollOnMount();
     this.initScrollbar();
+    if (this.config?.showCurrentTime || this.hasCustomCurrentTimeSlot) this.setCurrentTime();
   },
 
   methods: {
@@ -183,7 +219,16 @@ export default defineComponent({
       }
     },
 
-    filterOutFullDayEvents() {
+    destroyScrollbarAndHideOverflow() {
+      const wrapper = document.querySelector('.calendar-week__wrapper');
+
+      if (!(wrapper instanceof HTMLElement)) return;
+
+      wrapper.style.overflowY = 'hidden';
+      this.scrollbar.destroy();
+    },
+
+    separateFullDayEventsFromOtherEvents() {
       const fullDayEvents = [];
       const allOtherEvents = [];
 
@@ -226,10 +271,17 @@ export default defineComponent({
             'start'
           );
           const events = this.events.filter((event: eventInterface) => {
-            return (
-              event.time.start.substring(0, 11) ===
-              dateTimeString.substring(0, 11)
-            );
+            const eventIsInDay = event.time.start.substring(0, 11) === dateTimeString.substring(0, 11);
+            let eventIsInDayBoundaries = true;
+
+            if (this.time.HOURS_PER_DAY !== 24) {
+              const { hour: dayStartHour } = this.time.getHourAndMinutesFromTimePoints(this.time.DAY_START)
+              const { hour: dayEndHour } = this.time.getHourAndMinutesFromTimePoints(this.time.DAY_END)
+              const { hour: eventStartHour } = this.time.getAllVariablesFromDateTimeString(event.time.start)
+              eventIsInDayBoundaries = eventStartHour >= dayStartHour && eventStartHour < dayEndHour;
+            }
+
+            return eventIsInDay && eventIsInDayBoundaries;
           });
 
           return { dayName, dateTimeString, events };
@@ -313,6 +365,7 @@ export default defineComponent({
     },
 
     handleEventWasDragged(event: eventInterface) {
+      this.initScrollbar();
       const cleanedUpEvent = event;
       // Reset all properties of the event, that need be calculated anew
       delete cleanedUpEvent.totalConcurrentEvents;
@@ -336,17 +389,20 @@ export default defineComponent({
     },
 
     scrollOnMount() {
+      // The scrollToHour option is not compatible with setting custom day boundaries
+      if (this.time.HOURS_PER_DAY !== 24) return;
+
       const weekWrapper = document.querySelector('.calendar-week__wrapper');
 
-      if (weekWrapper) {
-        this.$nextTick(() => {
-          const weekHeight = +this.weekHeight.split('p')[0];
-          const oneHourInPixel = weekHeight / 24;
-          const hourToScrollTo = this.config.week?.scrollToHour || 8;
-          const desiredNumberOfPixelsToScroll = oneHourInPixel * hourToScrollTo;
-          weekWrapper.scroll(0, desiredNumberOfPixelsToScroll - 10); // -10 to display the hour in DayTimeline
-        })
-      }
+      if (!weekWrapper) return;
+
+      this.$nextTick(() => {
+        const weekHeight = +this.weekHeight.split('p')[0];
+        const oneHourInPixel = weekHeight / this.time.HOURS_PER_DAY;
+        const hourToScrollTo = typeof this.config.week?.scrollToHour === 'number' ? this.config.week.scrollToHour : 8;
+        const desiredNumberOfPixelsToScroll = oneHourInPixel * hourToScrollTo;
+        weekWrapper.scroll(0, desiredNumberOfPixelsToScroll - 10); // -10 to display the hour in DayTimeline
+      })
     },
 
     setDayIntervals() {
@@ -376,7 +432,22 @@ export default defineComponent({
 
       // 3. Set height of the week based on the number and length of intervals
       this.weekHeight =
-        this.dayIntervals.height * intervalMultiplier * 24 + 'px';
+        this.dayIntervals.height * intervalMultiplier * this.time.HOURS_PER_DAY + 'px';
+    },
+
+    setCurrentTime() {
+      const setTime = () => {
+        const nowString = this.time.getDateTimeStringFromDate(new Date())
+        const currentTimePercentage = this.time.getPercentageOfDayFromDateTimeString(nowString, this.time.DAY_START, this.time.DAY_END)
+
+        if (currentTimePercentage < 0 || currentTimePercentage > 100) return this.showCurrentTime = false;
+
+        this.showCurrentTime = true;
+        this.currentTimePercentage = currentTimePercentage
+
+      }
+      setTime()
+      setInterval(() => setTime(), 60000);
     },
   },
 });
@@ -399,6 +470,36 @@ export default defineComponent({
     width: 100%;
     height: v-bind(weekHeight);
     overflow: hidden;
+  }
+
+  .current-time-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    z-index: 1;
+    background-color: red;
+
+    &__circle {
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        transform: translate(-45%, -45%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: red;
+      }
+    }
+  }
+
+  .custom-current-time {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    z-index: 1;
   }
 }
 </style>
