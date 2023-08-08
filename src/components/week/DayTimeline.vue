@@ -13,8 +13,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { dayStartOrEnd } from '../../typings/config.interface';
+import { defineComponent, type PropType } from 'vue';
+import { DAY_TIME_POINT } from '../../typings/config.interface';
 import Time from '../../helpers/Time';
 
 export default defineComponent({
@@ -36,19 +36,17 @@ export default defineComponent({
       availableHours: [
         0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300,
         1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300,
-      ] as dayStartOrEnd[],
-      timelineHours: [] as dayStartOrEnd[],
+      ] as DAY_TIME_POINT[],
+      timelineHours: [] as DAY_TIME_POINT[],
     };
   },
 
   mounted() {
-    this.timelineHours = this.availableHours.filter(hour => {
-      return hour >= this.time.DAY_START && hour < this.time.DAY_END;
-    })
+    this.timelineHours = this.time.getTimelineHours();
   },
 
   methods: {
-    getLocaleTimeString(time: dayStartOrEnd): string {
+    getLocaleTimeString(time: DAY_TIME_POINT): string {
       const { hour } = this.time.getHourAndMinutesFromTimePoints(time);
 
       return this.time.getLocalizedHour(new Date(2100, 1, 1, hour));
@@ -57,7 +55,9 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
+@use '../../styles/_mixins.scss' as mixins;
+
 .day-timeline {
   position: absolute;
   top: 0;
@@ -80,7 +80,7 @@ export default defineComponent({
 
     &-text {
       line-height: 0;
-      transform: translate(-40px, 0px);
+      transform: translate(-40px, 0);
     }
 
     &:first-child {
@@ -91,6 +91,10 @@ export default defineComponent({
 
     &:not(:last-child) {
       border-bottom: var(--qalendar-border-gray-thin);
+
+      @include mixins.dark-mode {
+        border-color: var(--qalendar-dark-mode-line-color);
+      }
     }
   }
 }

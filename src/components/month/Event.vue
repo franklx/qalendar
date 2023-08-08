@@ -1,50 +1,59 @@
 <template>
   <div
-    v-if="isCustomEvent"
-    :id="elementId"
-    class="is-event"
-    :class="{ 'is-draggable': elementDraggableAttribute }"
-    :draggable="elementDraggableAttribute"
-    @dragstart="handleDragStart"
-    @click="handleClickOnEvent"
-  >
-    <slot
-      name="monthEvent"
-      :event-data="calendarEvent"
-    />
-  </div>
+    v-if="config.isSmall"
+    class="calendar-month__event"
+  />
 
-  <div
-    v-else
-    :id="elementId"
-    class="calendar-month__event is-event"
-    :class="{ 'is-draggable': elementDraggableAttribute }"
-    :draggable="elementDraggableAttribute"
-    @dragstart="handleDragStart"
-    @click.stop="handleClickOnEvent"
-  >
-    <span class="calendar-month__event-color" />
-
-    <span
-      v-if="eventTimeStart && !calendarEvent.originalEvent"
-      class="calendar-month__event-time"
+  <template v-else>
+    <div
+      v-if="isCustomEvent"
+      :id="elementId"
+      class="is-event"
+      data-ref="custom-event"
+      :class="{ 'is-draggable': elementDraggableAttribute }"
+      :draggable="elementDraggableAttribute"
+      @dragstart="handleDragStart"
+      @click="handleClickOnEvent"
     >
-      {{ eventTimeStart }}
-    </span>
+      <slot
+        name="monthEvent"
+        :event-data="calendarEvent"
+      />
+    </div>
 
-    <span class="calendar-month__event-title">
-      {{ calendarEvent.title }}
-    </span>
-  </div>
+    <div
+      v-else
+      :id="elementId"
+      data-ref="default-event"
+      class="calendar-month__event is-event"
+      :class="{ 'is-draggable': elementDraggableAttribute }"
+      :draggable="elementDraggableAttribute"
+      @dragstart="handleDragStart"
+      @click="handleClickOnEvent"
+    >
+      <span class="calendar-month__event-color" />
+
+      <span
+        v-if="eventTimeStart && !calendarEvent.originalEvent"
+        class="calendar-month__event-time"
+      >
+        {{ eventTimeStart }}
+      </span>
+
+      <span class="calendar-month__event-title">
+        {{ calendarEvent.title }}
+      </span>
+    </div>
+  </template>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import Time from '../../helpers/Time';
-import { eventInterface } from '../../typings/interfaces/event.interface';
+import { type eventInterface } from '../../typings/interfaces/event.interface';
 import { DATE_TIME_STRING_PATTERN, EVENT_COLORS } from '../../constants';
-import { configInterface } from '../../typings/config.interface';
-import { dayInterface } from '../../typings/interfaces/day.interface';
+import { type configInterface } from '../../typings/config.interface';
+import { type dayInterface } from '../../typings/interfaces/day.interface';
 
 export default defineComponent({
   name: 'Event',
@@ -97,7 +106,7 @@ export default defineComponent({
       return (
         this.eventIdPrefix +
         this.calendarEvent.id +
-        this.day.dateTimeString.substring(0, 10)
+        this.time.dateStringFrom(this.day.dateTimeString)
       );
     },
 
@@ -140,7 +149,6 @@ export default defineComponent({
 
   methods: {
     setColors() {
-      // First, if the event has a customColorScheme, and the name of that
       if (
         this.calendarEvent?.colorScheme &&
         this.config.style?.colorSchemes &&
@@ -197,9 +205,35 @@ export default defineComponent({
   font-size: var(--qalendar-font-xs);
   width: calc(100% - #{calc(var(--event-inline-padding) * 2)});
   margin-bottom: 4px;
-  padding: 2px var(--event-inline-padding);
+  padding: 0.25rem var(--event-inline-padding);
   cursor: pointer;
   user-select: none;
+
+  .calendar-month__event-time {
+    margin-right: 6px;
+  }
+
+  .calendar-month__event-time,
+  .calendar-month__event-title,
+  .calendar-month__event-color {
+    flex-shrink: 0;
+  }
+
+  .calendar-month__event-time,
+  .calendar-month__event-title {
+    .qalendar-is-small & {
+      display: none;
+    }
+  }
+
+  .qalendar-is-small & {
+    background-color: v-bind(eventBackgroundColor);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    padding: 1px;
+    margin-right: 1px;
+  }
 
   &.is-draggable {
     cursor: grab;
@@ -217,6 +251,10 @@ export default defineComponent({
 
   @include mixins.hover {
     background-color: var(--qalendar-light-gray);
+
+    @include mixins.hover {
+      background-color: var(--qalendar-option-hover);
+    }
   }
 
   .calendar-month__event-color {
@@ -225,20 +263,6 @@ export default defineComponent({
     height: 6px;
     border-radius: 50%;
     margin-right: 4px;
-  }
-
-  .calendar-month__event-time {
-    margin-right: 6px;
-  }
-
-  .calendar-month__event-time,
-  .calendar-month__event-title,
-  .calendar-month__event-color {
-    flex-shrink: 0;
-  }
-
-  .calendar-month__event-title {
-    // font-weight: 600;
   }
 }
 </style>

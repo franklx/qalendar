@@ -1,11 +1,12 @@
 <template>
   <div
     class="calendar-week__day"
-    @click.self="$emit('day-was-clicked', day.dateTimeString.substring(0, 10))"
+    @click.self="handleClickOnDay"
   >
     <DayEvent
       v-for="(event, eventIndex) in events"
       :key="eventIndex"
+      data-test="day-event"
       :event-prop="event"
       :day="day"
       :time="time"
@@ -28,7 +29,8 @@
 
     <template v-if="dayIntervals && dayIntervals.displayClickableInterval">
       <div
-        v-for="interval in intervals"
+        v-for="(interval, intervalIndex) in intervals"
+        :id="'interval-' + intervalIndex"
         :key="interval.intervalStart"
         class="calendar-week__day-interval"
         :class="{ 'has-border': interval.hasBorder }"
@@ -42,18 +44,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { dayInterface } from '../../typings/interfaces/day.interface';
+import { defineComponent, type PropType } from 'vue';
+import { type dayInterface } from '../../typings/interfaces/day.interface';
 import DayEvent from './DayEvent.vue';
 import EventConcurrency from '../../helpers/EventConcurrency';
-import { eventInterface } from '../../typings/interfaces/event.interface';
+import { type eventInterface } from '../../typings/interfaces/event.interface';
 import Time from '../../helpers/Time';
 import {
-  configInterface,
-  dayIntervalsType,
+  type configInterface,
+  type dayIntervalsType,
 } from '../../typings/config.interface';
-import { modeType } from '../../typings/types';
-import DayIntervals, { interval } from '../../helpers/DayIntervals';
+import {type DayInfo, type modeType} from '../../typings/types';
+import DayIntervals, { type interval } from '../../helpers/DayIntervals';
 const eventConcurrencyHelper = new EventConcurrency();
 
 export default defineComponent({
@@ -75,7 +77,7 @@ export default defineComponent({
       required: true,
     },
     dayInfo: {
-      type: Object as PropType<{ daysTotalN: number; thisDayIndex: number }>,
+      type: Object as PropType<DayInfo>,
       required: true,
     },
     mode: {
@@ -86,6 +88,10 @@ export default defineComponent({
       type: Object as PropType<dayIntervalsType>,
       required: true,
     },
+    weekHeight: {
+      type: Number,
+      required: true,
+    },
   },
 
   emits: [
@@ -94,6 +100,7 @@ export default defineComponent({
     'event-was-dragged',
     'interval-was-clicked',
     'day-was-clicked',
+    'datetime-was-clicked',
     'drag-start',
     'drag-end',
   ],
@@ -148,11 +155,38 @@ export default defineComponent({
         this.time.HOURS_PER_DAY,
       ).getIntervals()
     },
+
+    handleClickOnDay(event: MouseEvent) {
+      const timeClicked = this.time.getTimeFromClick(event.offsetY, this.weekHeight);
+      let dateString = this.time.dateStringFrom(this.day.dateTimeString);
+      const isFlexibleDay = this.time.DAY_END <= this.time.DAY_START;
+      if (isFlexibleDay) dateString = this.getDateStringForFlexibleDayBoundaries(dateString, timeClicked);
+      const dateTimeString = `${dateString} ${timeClicked}`;
+
+      this.$emit('day-was-clicked', dateString);
+      this.$emit('datetime-was-clicked', dateTimeString);
+    },
+
+    getDateStringForFlexibleDayBoundaries(dateString: string, timeClickedHHMM: string) {
+      const hourTwoDigits = this.time.doubleDigit(this.time.DAY_START / 100);
+      const dayStartTimeHHMM = `${hourTwoDigits}:00`
+      const isClickOnNextDay = timeClickedHHMM < dayStartTimeHHMM;
+
+      if (isClickOnNextDay) {
+        dateString = this.time.dateStringFrom(
+          this.time.addDaysToDateTimeString(1, dateString)
+        )
+      }
+
+      return dateString;
+    }
   },
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
+@use '../../styles/_mixins.scss' as mixins;
+
 .calendar-week__day {
   position: relative;
   width: 100%;
@@ -173,10 +207,18 @@ export default defineComponent({
 
   &:first-child {
     border-left: 1px dashed rgb(224 224 224);
+
+    @include mixins.dark-mode {
+      border-color: var(--qalendar-dark-mode-line-color);
+    }
   }
 
   &:not(:last-child) {
     border-right: 1px dashed rgb(224 224 224);
+
+    @include mixins.dark-mode {
+      border-color: var(--qalendar-dark-mode-line-color);
+    }
   }
 }
 </style>

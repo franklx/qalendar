@@ -21,11 +21,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { eventInterface } from '../../typings/interfaces/event.interface';
-import { configInterface } from '../../typings/config.interface';
+import { defineComponent, type PropType } from 'vue';
+import { type eventInterface } from '../../typings/interfaces/event.interface';
+import { type configInterface } from '../../typings/config.interface';
 import { EVENT_COLORS } from '../../constants';
-import { modeType } from '../../typings/types';
+import { type modeType } from '../../typings/types';
 
 interface extendedEventInterface extends eventInterface {
   nDays: number;
@@ -130,6 +130,7 @@ export default defineComponent({
   text-align: left;
   cursor: pointer;
   user-select: none;
+  overflow: hidden;
 
   &:active {
     cursor: not-allowed;

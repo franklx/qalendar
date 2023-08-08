@@ -100,15 +100,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 import Time, {
-  calendarMonthType,
-  calendarWeekType,
-  calendarYearMonths,
+  type calendarMonthType,
+  type calendarWeekType,
+  type calendarYearMonths,
+  WEEK_START_DAY,
 } from '../../helpers/Time';
-import { periodInterface } from '../../typings/interfaces/period.interface';
-import { configInterface } from '../../typings/config.interface';
-import { modeType } from '../../typings/types';
+import { type periodInterface } from '../../typings/interfaces/period.interface';
+import { type configInterface } from '../../typings/config.interface';
+import { type modeType } from '../../typings/types';
 
 interface disableDates {
   before: Date;
@@ -136,7 +137,7 @@ export default defineComponent({
       default: null,
     },
     firstDayOfWeek: {
-      type: String as PropType<'sunday' | 'monday'>,
+      type: String as PropType<WEEK_START_DAY>,
       default: '',
     },
     defaultDate: {
@@ -174,8 +175,7 @@ export default defineComponent({
        * This should not change as the user browses in the date picker, only when the user
        * PICKS a date in the date picker
        * */
-      datePickerCurrentDate:
-        this.periodProp?.selectedDate || this.defaultDate || new Date(),
+      datePickerCurrentDate: this.periodProp?.selectedDate || this.defaultDate || new Date(),
       selectedDate: this.periodProp?.selectedDate || new Date(),
       datePickerMode: 'month' as 'month' | 'year',
       weekDays: [] as calendarWeekType, // Used only for printing week day names,
@@ -200,20 +200,8 @@ export default defineComponent({
     },
   },
 
-  watch: {
-    period: {
-      deep: true,
-      handler() {
-        if (this.selectedDate.getTime() === this.period.selectedDate.getTime())
-          return;
-
-        this.hydrateDatePicker();
-      },
-    },
-  },
-
   mounted() {
-    this.hydrateDatePicker(true);
+    this.hydrateDatePicker();
   },
 
   methods: {
@@ -336,6 +324,7 @@ export default defineComponent({
     },
 
     toggleDatePickerMode() {
+      // toggle to year
       if (this.datePickerMode === 'month') {
         this.monthPickerDates = this.time.getCalendarYearMonths(
           this.datePickerCurrentDate.getFullYear()
@@ -344,14 +333,13 @@ export default defineComponent({
         return (this.datePickerMode = 'year');
       }
 
-      if (this.datePickerMode === 'year') {
-        this.weekPickerDates = this.time.getCalendarMonthSplitInWeeks(
-          this.datePickerCurrentDate.getFullYear(),
-          this.datePickerCurrentDate.getMonth()
-        );
+      // toggle to month
+      this.weekPickerDates = this.time.getCalendarMonthSplitInWeeks(
+        this.datePickerCurrentDate.getFullYear(),
+        this.datePickerCurrentDate.getMonth()
+      );
 
-        return (this.datePickerMode = 'month');
-      }
+      this.datePickerMode = 'month';
     },
 
     getLocale() {
@@ -393,12 +381,10 @@ export default defineComponent({
         setTimeout(() => (this.showDatePicker = false), 100);
     },
 
-    hydrateDatePicker(isOnMountHook = false) {
-      const date = isOnMountHook
-        ? this.datePickerCurrentDate
-        : this.selectedDate;
+    hydrateDatePicker() {
+      const date = this.datePickerCurrentDate;
       this.setMonthDaysInWeekPicker(date.getMonth(), date.getFullYear());
-      this.setWeek(date, isOnMountHook);
+      this.setWeek(date, true);
     },
 
     checkIfDateIsDisabled(date: Date) {
@@ -453,6 +439,12 @@ export default defineComponent({
     user-select: none;
     border: var(--qalendar-border-gray-thin);
 
+    @include mixins.dark-mode {
+      color: var(--qalendar-dark-mode-text-hint);
+      background-color: var(--qalendar-dark-mode-lightly-elevated-surface);
+      border-color: transparent;
+    }
+
     .qalendar-is-small & {
       border: 0;
     }
@@ -482,6 +474,12 @@ export default defineComponent({
     border-radius: 4px;
     min-width: 250px;
     box-shadow: 0 2px 4px rgb(240 236 236 / 76%);
+
+    @include mixins.dark-mode {
+      background-color: var(--qalendar-dark-mode-elevated-surface);
+      border-color: transparent;
+      box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+    }
 
     &.is-in-qalendar {
       top: calc(100% - 1px);
@@ -516,6 +514,10 @@ export default defineComponent({
       transition: var(--qalendar-text-transition);
       color: #131313;
 
+      @include mixins.dark-mode {
+        color: var(--qalendar-dark-mode-text-hint);
+      }
+
       @include mixins.hover {
         color: var(--qalendar-blue);
         cursor: pointer;
@@ -529,6 +531,30 @@ export default defineComponent({
     @include mixins.hover {
       color: var(--qalendar-blue);
       cursor: pointer;
+    }
+  }
+
+  .months {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--qalendar-spacing-half);
+    max-width: 20rem;
+
+    span {
+      padding: 4px;
+      border: var(--qalendar-border-gray-thin);
+      border-radius: 2px;
+      flex: 1 0 33%;
+      text-align: center;
+      cursor: pointer;
+      font-size: var(--qalendar-font-xs);
+      transition: all 0.2s ease;
+
+      @include mixins.hover {
+        background-color: var(--qalendar-theme-color);
+        color: #fff;
+        border: var(--qalendar-border-blue-thin);
+      }
     }
   }
 
@@ -561,7 +587,7 @@ export default defineComponent({
 
       &.has-day {
         @include mixins.hover {
-          background-color: var(--qalendar-light-gray);
+          background-color: var(--qalendar-option-hover);
         }
       }
 
@@ -579,7 +605,7 @@ export default defineComponent({
         cursor: not-allowed;
       }
 
-      [data-lang="ar"] & {
+      [data-lang='ar'] & {
         font-size: 0.65rem;
       }
     }
@@ -589,30 +615,6 @@ export default defineComponent({
     text-transform: uppercase;
     font-weight: 700;
     font-size: var(--qalendar-font-s);
-  }
-
-  .months {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--qalendar-spacing-half);
-    max-width: 20rem;
-
-    span {
-      padding: 4px;
-      border: var(--qalendar-border-gray-thin);
-      border-radius: 2px;
-      flex: 1 0 33%;
-      text-align: center;
-      cursor: pointer;
-      font-size: var(--qalendar-font-xs);
-      transition: all 0.2s ease;
-
-      @include mixins.hover {
-        background-color: var(--qalendar-theme-color);
-        color: #fff;
-        border: var(--qalendar-border-blue-thin);
-      }
-    }
   }
 }
 </style>

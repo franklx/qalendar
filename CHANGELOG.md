@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.5.0](https://github.com/tomosterlund/qalendar/compare/v3.4.0...v3.5.0) (2023-07-12)
+
+
+### Features
+
+* add config option to disable flyout closing when clicking outside ([#195](https://github.com/tomosterlund/qalendar/issues/195)) ([5a2891e](https://github.com/tomosterlund/qalendar/commit/5a2891e761d30ec6d2852da0b3d0abb424597f9a))
+
+# [3.4.0](https://github.com/tomosterlund/qalendar/compare/v3.3.0...v3.4.0) (2023-07-03)
+
+
+### Features
+
+* add japanese language ([#190](https://github.com/tomosterlund/qalendar/issues/190)) ([b0c945d](https://github.com/tomosterlund/qalendar/commit/b0c945da81335ba69927ed59a087994295f1795a))
+
+# [3.3.0](https://github.com/tomosterlund/qalendar/compare/v3.2.0...v3.3.0) (2023-06-29)
+
+
+### Features
+
+* add new event datetime was clicked ([#184](https://github.com/tomosterlund/qalendar/issues/184)) ([125fe3d](https://github.com/tomosterlund/qalendar/commit/125fe3dd6318de1531e0d8b9b84c04ad62eb8aa8))
+
+# [3.2.0](https://github.com/tomosterlund/qalendar/compare/v3.1.0...v3.2.0) (2023-06-23)
+
+
+### Features
+
+* dark mode ([#182](https://github.com/tomosterlund/qalendar/issues/182)) ([7d42539](https://github.com/tomosterlund/qalendar/commit/7d42539264bbea80fa6f68325970b0e859b99d4e))
+
+# [3.1.0](https://github.com/tomosterlund/qalendar/compare/v3.0.0...v3.1.0) (2023-06-16)
+
+
+### Features
+
+* **month:** add highlight to current day ([#180](https://github.com/tomosterlund/qalendar/issues/180)) ([0f08cef](https://github.com/tomosterlund/qalendar/commit/0f08cef62a5b02d5a6f26d897b7963480b2eb828))
+
+# [3.0.0](https://github.com/tomosterlund/qalendar/compare/v2.5.0...v3.0.0) (2023-06-12)
+
+
+### Features
+
+* v3 ([#177](https://github.com/tomosterlund/qalendar/issues/177)) ([b9ff016](https://github.com/tomosterlund/qalendar/commit/b9ff0161b0293373a1ccef3ad9896a4e358f4305)), closes [#174](https://github.com/tomosterlund/qalendar/issues/174) [#146](https://github.com/tomosterlund/qalendar/issues/146) [#163](https://github.com/tomosterlund/qalendar/issues/163)
+
+
+### BREAKING CHANGES
+
+* month mode on small screens has a new layout, and monthEvent slot now only works on larger screens
+
 # [2.5.0](https://github.com/tomosterlund/qalendar/compare/v2.4.0...v2.5.0) (2023-04-06)
 
 

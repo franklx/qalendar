@@ -50,17 +50,17 @@
           {{ calendarEvent.location }}
         </div>
 
-        <div v-if="calendarEvent.with" class="event-flyout__row">
+        <div v-if="calendarEvent.with" class="event-flyout__row is-with">
           <i :class="config.style?.iconClasses?.user"/>
           {{ calendarEvent.with }}
         </div>
 
-        <div v-if="calendarEvent.topic" class="event-flyout__row">
+        <div v-if="calendarEvent.topic" class="event-flyout__row is-topic">
           <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.topic}`"/>
           {{ calendarEvent.topic }}
         </div>
 
-        <div v-if="calendarEvent.description" class="event-flyout__row">
+        <div v-if="calendarEvent.description" class="event-flyout__row is-description">
           <i :class="`calendar-week__event-icon ${config.style?.iconClasses?.description}`"/>
           <!-- eslint-disable vue/no-v-html -->
           <p v-html="calendarEvent.description" />
@@ -78,17 +78,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
-import { eventInterface } from '../../typings/interfaces/event.interface';
-import EventFlyoutPosition, {
-  EVENT_FLYOUT_WIDTH,
-} from '../../helpers/EventFlyoutPosition';
-import { configInterface } from '../../typings/config.interface';
+import { defineComponent, type PropType } from 'vue';
+import { EVENT_TYPE, type eventInterface } from '../../typings/interfaces/event.interface';
+import EventFlyoutPosition, { EVENT_FLYOUT_WIDTH } from '../../helpers/EventFlyoutPosition';
+import { type configInterface } from '../../typings/config.interface';
 import Time from '../../helpers/Time';
-import {
-  DATE_TIME_STRING_FULL_DAY_PATTERN,
-  EVENT_COLORS,
-} from '../../constants';
+import {EVENT_COLORS,} from '../../constants';
+import Helpers from "../../helpers/Helpers";
+
 const eventFlyoutPositionHelper = new EventFlyoutPosition();
 
 export default defineComponent({
@@ -128,62 +125,35 @@ export default defineComponent({
 
   computed: {
     getEventTime() {
-      // 1. Null handling
       if (!this.calendarEvent || !this.calendarEvent.time) return null;
 
-      // 2. Handle multiple day events
-      // Important: This must always be evaluated before checking if the event is a full day event
-      // Because day 2 until (last day - 1) of a multiple day event, will technically be a full day event,
-      // but we still want to display the original start and end time
-      if (this.calendarEvent.originalEvent) {
-        const {
-          year: startYear,
-          month: startMonth,
-          date: startDate,
-          hour: startHour,
-          minutes: startMinutes,
-        } = this.time.getAllVariablesFromDateTimeString(this.calendarEvent.originalEvent.time.start)
+      const eventType = Helpers.getEventType(this.calendarEvent, this.time);
 
+      if ([EVENT_TYPE.MULTI_DAY_TIMED].includes(eventType)) {
         const startLocalizedString = this.getDateFromDateString(
-          this.calendarEvent.originalEvent.time.start
-        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.originalEvent.time.start)
-
-        const {
-          year: endYear,
-          month: endMonth,
-          date: endDate,
-          hour: endHour,
-          minutes: endMinutes,
-        } = this.time.getAllVariablesFromDateTimeString(this.calendarEvent.originalEvent.time.end)
-
+          this.calendarEvent.time.start
+        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.time.start)
         const endLocalizedString = this.getDateFromDateString(
-          this.calendarEvent.originalEvent.time.end
-        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.originalEvent.time.end)
+          this.calendarEvent.time.end
+        ) + ' ' + this.time.getLocalizedTime(this.calendarEvent.time.end)
 
         return `${startLocalizedString} - ${endLocalizedString}`;
       }
 
-      // 3. Handle full day events
-      if (
-        DATE_TIME_STRING_FULL_DAY_PATTERN.test(this.calendarEvent.time.start)
-      ) {
-        const startDate = this.getDateFromDateString(
-          this.calendarEvent.time.start
-        );
+      if ([EVENT_TYPE.SINGLE_DAY_FULL_DAY, EVENT_TYPE.MULTI_DAY_FULL_DAY].includes(eventType)) {
+        const startDate = this.getDateFromDateString(this.calendarEvent.time.start);
         const endDate = this.getDateFromDateString(this.calendarEvent.time.end);
+
         if (startDate === endDate) return startDate;
 
         return `${startDate} - ${endDate}`;
       }
 
-      // 4. Handle timed events
-      const dateString = this.getDateFromDateString(
-        this.calendarEvent.time.start
+      const dateString = this.getDateFromDateString(this.calendarEvent.time.start);
+      const timeString = this.time.getLocalizedTimeRange(
+        this.calendarEvent.time.start,
+        this.calendarEvent.time.end
       );
-      const timeString =
-        this.time.getLocalizedTime(this.calendarEvent.time.start) +
-        ' - ' +
-        this.time.getLocalizedTime(this.calendarEvent.time.end);
 
       return `${dateString} ⋅ ${timeString}`;
     },
@@ -305,17 +275,15 @@ export default defineComponent({
     },
 
     closeFlyoutOnClickOutside(e: any) {
-      try {
-        const flyout = document.querySelector('.event-flyout');
-        if (!flyout || !this.isVisible) return;
+      const flyout = document.querySelector('.event-flyout');
+      if (!flyout || !this.isVisible) return;
 
-        const isClickOutside = !flyout.contains(e.target);
-        const isClickOnEvent = !!e.target.closest('.is-event');
+      const isClickOutside = !flyout.contains(e.target);
+      const isClickOnEvent = !!e.target.closest('.is-event');
+      const closeOnClickOutside = this.config.eventDialog?.closeOnClickOutside ?? true;
 
-        if (this.isVisible && isClickOutside && !isClickOnEvent)
-          this.closeFlyout();
-      } catch (err) {
-        console.log(err);
+      if (this.isVisible && isClickOutside && !isClickOnEvent && closeOnClickOutside) {
+        this.closeFlyout();
       }
     },
   },
@@ -341,6 +309,11 @@ export default defineComponent({
   transform: translateY(-40px);
   opacity: 0;
   pointer-events: none;
+
+  @include mixins.dark-mode {
+    background-color: var(--qalendar-dark-mode-elevated-surface);
+    border-color: transparent;
+  }
 
   &.is-visible {
     opacity: 1;
@@ -378,6 +351,10 @@ export default defineComponent({
     font-size: var(--qalendar-font-l);
     color: gray;
 
+    @include mixins.dark-mode {
+      color: var(--qalendar-dark-mode-text-hint);
+    }
+
     &:hover {
       color: var(--qalendar-theme-color);
       cursor: pointer;
@@ -409,6 +386,10 @@ export default defineComponent({
       margin-top: 0.1rem;
       color: #5f6368;
       width: 14px;
+
+      @include mixins.dark-mode {
+        color: var(--qalendar-dark-mode-text-hint);
+      }
     }
   }
 
